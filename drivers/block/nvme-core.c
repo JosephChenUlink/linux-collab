@@ -186,7 +186,7 @@ static int nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 }
 
 static int nvme_init_admin_hctx(struct blk_mq_hw_ctx *hctx, void *data,
-			        unsigned int i)
+				unsigned int i)
 {
 	struct nvme_dev *dev = data;
 	struct nvme_queue *nvmeq = raw_nvmeq(dev, 0);
@@ -296,7 +296,7 @@ static void *nvme_finish_cmd(struct nvme_queue *nvmeq, int tag,
 {
 	struct nvme_cmd_cb *cmd = get_cmd_from_tag(nvmeq, tag);
 	void *ctx;
-	if (tag >= nvmeq->q_depth) { 
+	if (tag >= nvmeq->q_depth) {
 		*fn = special_completion;
 		return CMD_CTX_INVALID;
 	}
@@ -587,10 +587,10 @@ static int nvme_submit_iod(struct nvme_queue *nvmeq, struct nvme_iod *iod,
 	}
 
 	if (req->cmd_flags & REQ_DISCARD) {
-                nvme_submit_discard(nvmeq, ns, req, iod);
+		nvme_submit_discard(nvmeq, ns, req, iod);
 		goto end_submit;
 	}
-        if (req->cmd_flags & REQ_FLUSH) {
+	if (req->cmd_flags & REQ_FLUSH) {
 		nvme_submit_flush(nvmeq, ns, req->tag);
 		goto end_submit;
 	}
@@ -759,9 +759,11 @@ static irqreturn_t nvme_irq_check(int irq, void *data)
 
 static void nvme_abort_command(struct nvme_queue *nvmeq, int cmdid)
 {
-	//spin_lock_irq(&nvmeq->q_lock);
-	//cancel_cmd_cb(nvmeq, cmdid, NULL);
-	//spin_unlock_irq(&nvmeq->q_lock);
+	/*
+	 * spin_lock_irq(&nvmeq->q_lock);
+	 * cancel_cmd_cb(nvmeq, cmdid, NULL);
+	 * spin_unlock_irq(&nvmeq->q_lock);
+	 */
 }
 
 struct sync_cmd_info {
@@ -801,7 +803,7 @@ int nvme_submit_sync_cmd(struct request *req, struct nvme_command *cmd,
 	set_current_state(TASK_KILLABLE);
 	ret = nvme_submit_cmd(nvmeq, cmd);
 	if (ret) {
-		nvme_finish_cmd(nvmeq, req->tag, NULL);	
+		nvme_finish_cmd(nvmeq, req->tag, NULL);
 		set_current_state(TASK_RUNNING);
 	}
 	schedule_timeout(timeout);
@@ -1219,7 +1221,7 @@ static struct nvme_queue *nvme_alloc_queue(struct nvme_dev *dev, int qid,
 		goto free_cqdma;
 
 	if (qid && !zalloc_cpumask_var(&nvmeq->cpu_mask, GFP_KERNEL))
-                goto free_sqdma;
+		goto free_sqdma;
 
 	nvmeq->q_dmadev = dmadev;
 	nvmeq->dev = dev;
