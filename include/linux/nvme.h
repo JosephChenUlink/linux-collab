@@ -72,9 +72,9 @@ extern unsigned char io_timeout;
 struct nvme_dev {
 	struct list_head node;
 	struct nvme_queue **queues;
-	struct request_queue *admin_rq;
-	struct blk_mq_tag_set admin_tagset;
+	struct request_queue *admin_q;
 	struct blk_mq_tag_set tagset;
+	struct blk_mq_tag_set admin_tagset;
 	u32 __iomem *dbs;
 	struct pci_dev *pci_dev;
 	struct dma_pool *prp_page_pool;
@@ -156,7 +156,8 @@ struct nvme_iod *nvme_map_user_pages(struct nvme_dev *dev, int write,
 				unsigned long addr, unsigned length);
 void nvme_unmap_user_pages(struct nvme_dev *dev, int write,
 			struct nvme_iod *iod);
-int nvme_submit_io_cmd(struct nvme_dev *, struct nvme_command *, u32 *);
+int nvme_submit_io_cmd(struct nvme_dev *, struct nvme_ns *,
+						struct nvme_command *, u32 *);
 int nvme_submit_flush_data(struct nvme_queue *nvmeq, struct nvme_ns *ns);
 int nvme_submit_admin_cmd(struct nvme_dev *, struct nvme_command *,
 							u32 *result);
