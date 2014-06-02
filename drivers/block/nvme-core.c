@@ -137,7 +137,6 @@ static int nvme_admin_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 {
 	struct nvme_dev *dev = data;
 	struct nvme_queue *nvmeq = dev->queues[0];
-	BUG_ON(!nvmeq);
 	WARN_ON(nvmeq->hctx);
 	nvmeq->hctx = hctx;
 	hctx->driver_data = nvmeq;
@@ -238,13 +237,14 @@ static void abort_completion(struct nvme_queue *nvmeq, void *ctx,
 	struct request *req;
 	struct nvme_cmd_info *aborted = ctx;
 	struct nvme_queue *a_nvmeq = aborted->nvmeq;
+	struct blk_mq_hw_ctx *hctx = nvmeq->hctx;
 	void *a_ctx;
 	nvme_completion_fn a_fn;
 	static struct nvme_completion a_cqe = {
 		.status = cpu_to_le16(NVME_SC_ABORT_REQ << 1),
 	};
 
-	req = blk_mq_tag_to_rq(nvmeq->hctx, cqe->command_id);
+	req = blk_mq_tag_to_rq(hctx->tags, cqe->command_id);
 	blk_put_request(req);
 
 	if (!cqe->status)
@@ -271,7 +271,7 @@ static inline struct nvme_cmd_info *get_cmd_from_tag(struct nvme_queue *nvmeq,
 				  unsigned int tag)
 {
 	struct blk_mq_hw_ctx *hctx = nvmeq->hctx;
-	struct request *req = blk_mq_tag_to_rq(hctx, tag);
+	struct request *req = blk_mq_tag_to_rq(hctx->tags, tag);
 	return blk_mq_rq_to_pdu(req);
 }
 
@@ -1009,7 +1009,7 @@ static void nvme_cancel_queue_ios(void *data, unsigned long *tag_map)
 		if (tag >= qdepth)
 			break;
 
-		req = blk_mq_tag_to_rq(hctx, tag++);
+		req = blk_mq_tag_to_rq(hctx->tags, tag++);
 		cmd = blk_mq_rq_to_pdu(req);
 
 		if (cmd->ctx == CMD_CTX_CANCELLED)
