@@ -1064,9 +1064,9 @@ static void nvme_free_queues(struct nvme_dev *dev, int lowest)
 
 	for (i = dev->queue_count - 1; i >= lowest; i--) {
 		struct nvme_queue *nvmeq = dev->queues[i];
-		nvme_free_queue(nvmeq);
 		dev->queue_count--;
 		dev->queues[i] = NULL;
+		nvme_free_queue(nvmeq);
 	}
 }
 
