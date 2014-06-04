@@ -98,7 +98,6 @@ struct nvme_queue {
 	u8 cq_phase;
 	u8 cqe_seen;
 	u8 q_suspended;
-	cpumask_var_t cpu_mask;
 	struct async_cmd_info cmdinfo;
 	struct blk_mq_hw_ctx *hctx;
 };
@@ -1056,8 +1055,6 @@ static void nvme_free_queue(struct nvme_queue *nvmeq)
 				(void *)nvmeq->cqes, nvmeq->cq_dma_addr);
 	dma_free_coherent(nvmeq->q_dmadev, SQ_SIZE(nvmeq->q_depth),
 					nvmeq->sq_cmds, nvmeq->sq_dma_addr);
-	if (nvmeq->qid)
-		free_cpumask_var(nvmeq->cpu_mask);
 	kfree(nvmeq);
 }
 
@@ -1143,9 +1140,6 @@ static struct nvme_queue *nvme_alloc_queue(struct nvme_dev *dev, int qid,
 	if (!nvmeq->sq_cmds)
 		goto free_cqdma;
 
-	if (qid && !zalloc_cpumask_var(&nvmeq->cpu_mask, GFP_KERNEL))
-		goto free_sqdma;
-
 	nvmeq->q_dmadev = dmadev;
 	nvmeq->dev = dev;
 	snprintf(nvmeq->irqname, sizeof(nvmeq->irqname), "nvme%dq%d",
@@ -1163,9 +1157,6 @@ static struct nvme_queue *nvme_alloc_queue(struct nvme_dev *dev, int qid,
 
 	return nvmeq;
 
- free_sqdma:
-	dma_free_coherent(dmadev, SQ_SIZE(depth), (void *)nvmeq->sq_cmds,
-							nvmeq->sq_dma_addr);
  free_cqdma:
 	dma_free_coherent(dmadev, CQ_SIZE(depth), (void *)nvmeq->cqes,
 							nvmeq->cq_dma_addr);
