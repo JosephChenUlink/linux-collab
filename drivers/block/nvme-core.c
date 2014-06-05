@@ -1788,6 +1788,8 @@ static struct nvme_ns *nvme_alloc_ns(struct nvme_dev *dev, unsigned nsid,
 	blk_queue_logical_block_size(ns->queue, 1 << ns->lba_shift);
 	if (dev->max_hw_sectors)
 		blk_queue_max_hw_sectors(ns->queue, dev->max_hw_sectors);
+	if (dev->stripe_size)
+		blk_queue_chunk_sectors(ns->queue, dev->stripe_size >> 9);
 	if (dev->vwc & NVME_CTRL_VWC_PRESENT)
 		blk_queue_flush(ns->queue, REQ_FLUSH | REQ_FUA);
 
@@ -1959,8 +1961,17 @@ static int nvme_dev_add(struct nvme_dev *dev)
 	if (ctrl->mdts)
 		dev->max_hw_sectors = 1 << (ctrl->mdts + shift - 9);
 	if ((pdev->vendor == PCI_VENDOR_ID_INTEL) &&
-			(pdev->device == 0x0953) && ctrl->vs[3])
+			(pdev->device == 0x0953) && ctrl->vs[3]) {
+		unsigned int max_hw_sectors;
+
 		dev->stripe_size = 1 << (ctrl->vs[3] + shift);
+		max_hw_sectors = dev->stripe_size >> (shift - 9);
+		if (dev->max_hw_sectors) {
+			dev->max_hw_sectors = min(max_hw_sectors,
+							dev->max_hw_sectors);
+		} else
+			dev->max_hw_sectors = max_hw_sectors;
+	}
 
 	dev->tagset.ops = &nvme_mq_ops;
 	dev->tagset.nr_hw_queues = dev->online_queues - 1;
