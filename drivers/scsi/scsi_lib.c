@@ -195,12 +195,12 @@ int scsi_execute(struct scsi_device *sdev, const unsigned char *cmd,
 	req = blk_get_request(sdev->request_queue, write, __GFP_WAIT);
 	if (!req)
 		return ret;
+	blk_rq_set_block_pc(req);
 
 	if (bufflen &&	blk_rq_map_kern(sdev->request_queue, req,
 					buffer, bufflen, __GFP_WAIT))
 		goto out;
 
-	blk_rq_set_block_pc(req);
 	req->cmd_len = COMMAND_SIZE(cmd[0]);
 	memcpy(req->cmd, cmd, req->cmd_len);
 	req->sense = sense;
