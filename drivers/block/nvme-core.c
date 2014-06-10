@@ -145,6 +145,7 @@ static int nvme_admin_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
 {
 	struct nvme_dev *dev = data;
 	struct nvme_queue *nvmeq = dev->queues[0];
+
 	WARN_ON(nvmeq->hctx);
 	nvmeq->hctx = hctx;
 	hctx->driver_data = nvmeq;
@@ -158,6 +159,7 @@ static int nvme_admin_init_request(void *data, struct request *req,
 	struct nvme_dev *dev = data;
 	struct nvme_cmd_info *cmd = blk_mq_rq_to_pdu(req);
 	struct nvme_queue *nvmeq = dev->queues[0];
+
 	WARN_ON(!nvmeq);
 	WARN_ON(!cmd);
 	cmd->nvmeq = nvmeq;
@@ -187,6 +189,7 @@ static int nvme_init_request(void *data, struct request *req,
 	struct nvme_dev *dev = data;
 	struct nvme_cmd_info *cmd = blk_mq_rq_to_pdu(req);
 	struct nvme_queue *nvmeq = dev->queues[hctx_idx + 1];
+
 	WARN_ON(!nvmeq);
 	WARN_ON(!cmd);
 	cmd->nvmeq = nvmeq;
@@ -230,6 +233,7 @@ static void special_completion(struct nvme_queue *nvmeq, void *ctx,
 static void *cancel_cmd_info(struct nvme_cmd_info *cmd, nvme_completion_fn *fn)
 {
 	void *ctx;
+
 	if (fn)
 		*fn = cmd->fn;
 	ctx = cmd->ctx;
@@ -279,6 +283,7 @@ static inline struct nvme_cmd_info *get_cmd_from_tag(struct nvme_queue *nvmeq,
 {
 	struct blk_mq_hw_ctx *hctx = nvmeq->hctx;
 	struct request *req = blk_mq_tag_to_rq(hctx->tags, tag);
+
 	return blk_mq_rq_to_pdu(req);
 }
 
